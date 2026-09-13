@@ -1,0 +1,11 @@
+{
+  "name": "Hotel Capacity Live",
+  "install": "npm install",
+  "start": "npm run dev",
+  "ports": [
+    {
+      "name": "web",
+      "port": 3000
+    }
+  ]
+}
