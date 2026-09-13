@@ -4,8 +4,6 @@ This directory holds **current truth** for Hotel Capacity Live — updated when 
 
 | File | Contents |
 | --- | --- |
-| `architecture.md` | System overview, refresh cadence, caching (create when first backend change lands) |
-| `data-sources.md` | Vendor APIs and connectors (create when first connector lands) |
-| `ui.md` | Routes, iPad layouts, key components (create when UI stabilizes) |
-
-Bootstrap state: no living spec files yet beyond this README. The first `/archive` after a real feature will populate them.
+| `architecture.md` | System shape, refresh cadence, key modules |
+| `data-sources.md` | Connectors, auth, env vars |
+| `ui.md` | Routes, dashboard layout, drill-down |

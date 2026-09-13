@@ -9,7 +9,7 @@
 
 Data should be as **current as possible**, sourced from vendor APIs, PMS/channel-manager connectors, or other approved feeds. The UI is optimized for quick scanning on iPad and for agent-driven workflows in Cursor Cloud Agents.
 
-This repository is a **greenfield bootstrap**. The app currently shows placeholder/mock data. Real connectors and refresh pipelines are implemented only through approved OpenSpec changes.
+The app serves **live capacity data** through a connector → cache → API pipeline. Default connector is `mock-live` (simulated drift); **Hilton Direct Connect** is available when partner credentials are configured. Additional vendors are added via approved OpenSpec changes.
 
 ## Stack
 
@@ -21,7 +21,9 @@ This repository is a **greenfield bootstrap**. The app currently shows placehold
 | Tests | **Vitest** | Lightweight unit tests for data helpers and API adapters |
 | Package manager | **npm** | Default for Cloud Agent `install` scripts |
 
-Future additions (via `/propose`, not bootstrap): data connectors (STR, OTA feeds, internal APIs), polling/WebSocket refresh, Postgres or Redis cache, auth.
+Implemented: polling refresh (5 min), pluggable connectors (`mock-live`, `hilton`, `composite`), in-memory cache.
+
+Future additions (via `/propose`): additional vendor connectors (STR, Marriott, internal PMS), Redis cache, auth, WebSocket push.
 
 ## Cloud Agent workflow: propose → apply → archive
 
@@ -58,9 +60,12 @@ npm run build
 ```bash
 npm test && npm run build
 curl -sf http://localhost:3000 | grep -q "Hotel Capacity Live"
+curl -sf http://localhost:3000/api/markets | grep -q "mock-live"
 ```
 
-The last line assumes `npm run dev` is running in another terminal. A passing smoke test means tests green, build succeeds, and the home page renders the app title.
+The curl lines assume `npm run dev` is running in another terminal. A passing smoke test means tests green, build succeeds, the home page renders, and the markets API returns data.
+
+**Connector env** (optional): `CAPACITY_CONNECTOR` (`mock-live` | `hilton` | `composite`), `HILTON_CLIENT_ID`, `HILTON_CLIENT_SECRET`. See `openspec/specs/data-sources.md`.
 
 ## Repository layout
 
@@ -85,8 +90,8 @@ src/                      # Next.js application
 
 ## Next steps
 
-Run **`/propose`** with a concrete first feature, for example:
+Run **`/propose`** for follow-up work, for example:
 
-> `/propose Add STR or mock live connector for airport market capacity with 5-minute refresh`
+> `/propose Add STR market connector and Redis cache for multi-instance refresh`
 
 That creates the change folder and design docs without code. After review, run **`/apply`** on the approved slug.
