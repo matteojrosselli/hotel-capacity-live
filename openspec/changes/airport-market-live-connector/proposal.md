@@ -10,6 +10,8 @@ The dashboard currently renders **static mock data** from `getMockMarketCapacity
 
 - **Connector layer** — pluggable fetch/normalize pipeline that returns `MarketCapacity[]` and `PropertyCapacity[]` using the existing types in `src/lib/capacity.ts`.
 - **Initial connector** — `mock-live` provider that returns deterministic seed data with **simulated drift** (small random deltas on each fetch) so polling visibly updates the UI without external vendor credentials.
+- **Hilton connector** — real **Hilton Direct Connect Shop** integration (`POST /hospitality-partner/v2/dcshop/props/{propCode}`) with OAuth client credentials; normalizes `numRoomsAvail` into property capacity for catalogued Hilton airport properties.
+- **Multi-vendor registry** — `CAPACITY_CONNECTOR` supports `mock-live`, `hilton`, or `composite`; `CAPACITY_VENDORS` lists vendors to merge (e.g. `hilton,mock-live`).
 - **Server cache** — in-memory TTL cache (default **5 minutes**) keyed by airport code; connector runs only on cache miss or explicit refresh.
 - **API routes** (Next.js App Router):
   - `GET /api/markets` — all airport markets with aggregate capacity.
@@ -20,7 +22,7 @@ The dashboard currently renders **static mock data** from `getMockMarketCapacity
 
 ### Out of scope
 
-- Real vendor integrations (STR, OTA, PMS) — connector interface only; swap-in later via env (`CAPACITY_CONNECTOR=str`).
+- Additional real vendor integrations beyond Hilton (STR, OTA, other PMS) — registry supports swap-in later.
 - Authentication / API keys exposed to the browser.
 - Postgres, Redis, or WebSocket push (polling only for this change).
 - Historical charts, alerts, or multi-day forecasts.
@@ -33,11 +35,13 @@ The dashboard currently renders **static mock data** from `getMockMarketCapacity
 - [ ] Unknown airport codes return **404** with a clear error body.
 - [ ] Dashboard shows live-fetched markets (not direct mock imports) and **auto-refreshes every 5 minutes** without full page reload.
 - [ ] User can drill into a market and see only properties for that airport code.
-- [ ] Header or market cards show **data source** (`mock-live`) and **last refreshed** timestamp.
+- [ ] Header or market cards show **data source** (connector id, e.g. `mock-live`, `hilton`, `hilton+mock-live`) and **last refreshed** timestamp.
+- [ ] With `HILTON_CLIENT_ID` + `HILTON_CLIENT_SECRET` set, `CAPACITY_CONNECTOR=hilton` fetches real availability from Hilton shop API for catalogued properties.
 - [ ] `npm test` covers connector + cache helpers; smoke test (`npm test && npm run build`) passes.
 - [ ] No secrets committed; connector selection via `CAPACITY_CONNECTOR` env (default `mock-live`).
 
 ## Dependencies / blockers
 
 - None for `mock-live` implementation.
-- Future real connectors will require vendor API keys in Cloud Agent environment secrets (documented at archive time in `openspec/specs/data-sources.md`).
+- Hilton live data requires `HILTON_CLIENT_ID` and `HILTON_CLIENT_SECRET` in Cloud Agent environment secrets (Hilton Partner API / Direct Connect sandbox or production).
+- Additional vendors will follow the same connector registry pattern (documented at archive time in `openspec/specs/data-sources.md`).

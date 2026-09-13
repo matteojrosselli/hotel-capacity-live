@@ -70,8 +70,8 @@ type ApiError = { error: string; code?: string };
                                           │ miss
                                           ▼
                                   ┌───────────────┐
-                                  │  Connector    │ mock-live (v1)
-                                  │  registry     │ → future: str, internal
+                                  │  Connector    │ mock-live | hilton | composite
+                                  │  registry     │ → future: str, marriott, …
                                   └───────────────┘
 ```
 
@@ -89,9 +89,14 @@ type ApiError = { error: string; code?: string };
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `CAPACITY_CONNECTOR` | `mock-live` | Connector id |
+| `CAPACITY_CONNECTOR` | `mock-live` | Connector id: `mock-live`, `hilton`, or `composite` |
+| `CAPACITY_VENDORS` | `hilton,mock-live` when composite + Hilton configured | Comma-separated vendor ids for composite mode |
 | `CAPACITY_CACHE_TTL_MS` | `300000` | Server cache TTL (5 min) |
 | `NEXT_PUBLIC_CAPACITY_POLL_MS` | `300000` | Client poll interval |
+| `HILTON_CLIENT_ID` | — | Hilton OAuth client id (secret) |
+| `HILTON_CLIENT_SECRET` | — | Hilton OAuth client secret (secret) |
+| `HILTON_API_BASE` | `https://kapip-s.hilton.io` | Hilton API host (sandbox default) |
+| `HILTON_PROPERTY_CATALOG` | built-in JSON | Optional JSON array override for prop codes + airport mapping |
 
 ### Routes
 
@@ -124,7 +129,16 @@ interface CapacityConnector {
 - Set `asOf` to `new Date().toISOString()`.
 - Use deterministic RNG seeded by hour bucket if tests need stability, or inject RNG for tests.
 
-**Future connectors:** Register in `src/lib/connectors/index.ts`; STR/internal implementations live in separate OpenSpec changes.
+**`hilton` connector:**
+
+- OAuth: `POST {HILTON_API_BASE}/hospitality-partner/v2/realms/applications/token` with client credentials; token cached in-memory until expiry.
+- Shop: for each catalog entry, `POST .../dcshop/props/{propCode}` with tonight→tomorrow stay dates, `numAdults: 1`.
+- Normalize: sum max `numRoomsAvail` per `roomTypeCode` from `roomRates`; `roomsTotal` from static catalog; `roomsSold = roomsTotal - roomsAvailable`.
+- Catalog: default ORD/LAX/JFK Hilton airport properties; override via `HILTON_PROPERTY_CATALOG` env JSON.
+
+**`composite` connector:** Fetches from each listed vendor in parallel; merges by unique `propertyId`; skips vendors that fail (logs error) unless all fail.
+
+**Future connectors:** Register in `src/lib/connectors/registry.ts`; STR/Marriott/etc. follow the same `CapacityConnector` interface.
 
 ## UI
 
